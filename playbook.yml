@@ -1,0 +1,45 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: update repo cache
+      apt: update_cache=yes cache_valid_time=3600
+    - name: upgrade all packages
+      apt: upgrade=yes
+    - name: Automatically select the Oracle License
+      shell: echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+    - name: Add webupd8 repo
+      apt_repository: repo='ppa:webupd8team/java' state=present
+    - name: install packages
+      apt: pkg={{item}} state=present
+      with_items:
+        - apt-transport-https
+        - build-essential
+        - curl
+        - git
+        - maven
+        - nodejs
+        - npm
+        - ntp
+        - oracle-java8-installer
+        - oracle-java8-set-default
+        - wget
+        - vim
+        - zsh
+      notify:
+        - restart ntpd
+    - name: install docker
+      shell: curl -s https://get.docker.io/ubuntu/ | sudo sh creates=/usr/bin/docker
+    - name: install golang
+      shell: wget -qO- http://golang.org/dl/go1.3.linux-amd64.tar.gz | tar xvzf - chdir=/usr/local creates=/usr/local/go
+    - name: change vagrant shell to zsh
+      user: name=vagrant shell=/bin/zsh state=present
+    - name: copy zshrc
+      copy: src=files/shell/zshrc dest=/home/vagrant/.zshrc owner=vagrant group=vagrant mode=644 force=no
+    - name: copy zprofile
+      copy: src=files/shell/zprofile dest=/home/vagrant/.zprofile owner=vagrant group=vagrant mode=644 force=no
+    - name: copy oh-my-zsh
+      copy: src=files/shell/oh-my-zsh/ dest=/home/vagrant/.oh-my-zsh owner=vagrant group=vagrant mode=755 force=no
+  handlers:
+    - name: restart ntpd
+      service: name=ntp state=restarted
