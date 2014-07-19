@@ -28,6 +28,10 @@
         - zsh
       notify:
         - restart ntpd
+    - name: install grunt cli
+      npm: name=grunt-cli global=yes
+    - name: install bower
+      npm: name=bower global=yes
     - name: install docker
       shell: curl -s https://get.docker.io/ubuntu/ | sudo sh creates=/usr/bin/docker
     - name: install golang
