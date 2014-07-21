@@ -1,5 +1,9 @@
 ---
 - hosts: all
+  vars:
+    # Probably want to customize these!
+    dev_user: eric
+    auth_key_file: /Users/{{dev_user}}/.ssh/id_rsa.pub
   sudo: yes
   tasks:
     - name: update repo cache
@@ -18,16 +22,28 @@
         - curl
         - git
         - maven
+        - mercurial
         - nodejs
+        - nodejs-legacy
         - npm
         - ntp
         - oracle-java8-installer
         - oracle-java8-set-default
+        - ruby
+        - sudo
         - wget
         - vim
         - zsh
       notify:
         - restart ntpd
+    - name: update sudoers
+      copy: src=files/sudoers dest=/etc/sudoers owner=root group=root mode=440
+    - name: install sass
+      gem: name=sass state=present user_install=no
+    - name: install bourbun
+      gem: name=bourbon state=present user_install=no
+    - name: install neat
+      gem: name=neat state=present user_install=no
     - name: install grunt cli
       npm: name=grunt-cli global=yes
     - name: install bower
@@ -36,14 +52,20 @@
       shell: curl -s https://get.docker.io/ubuntu/ | sudo sh creates=/usr/bin/docker
     - name: install golang
       shell: wget -qO- http://golang.org/dl/go1.3.linux-amd64.tar.gz | tar xvzf - chdir=/usr/local creates=/usr/local/go
-    - name: change vagrant shell to zsh
-      user: name=vagrant shell=/bin/zsh state=present
+    - name: create {{dev_user}} group
+      group: name={{dev_user}} state=present
+    - name: create {{dev_user}} user
+      user: name={{dev_user}} home=/home/{{dev_user}} append=yes group={{dev_user}} groups=root shell=/bin/zsh state=present
+    - name: add authorized key to {{dev_user}}
+      authorized_key: user={{dev_user}} key="{{ item }}"
+      with_file:
+        - "{{ auth_key_file }}"
     - name: copy zshrc
-      copy: src=files/shell/zshrc dest=/home/vagrant/.zshrc owner=vagrant group=vagrant mode=644 force=no
+      copy: src=files/shell/zshrc dest=/home/{{dev_user}}/.zshrc owner={{dev_user}} group={{dev_user}} mode=644 force=no
     - name: copy zprofile
-      copy: src=files/shell/zprofile dest=/home/vagrant/.zprofile owner=vagrant group=vagrant mode=644 force=no
+      copy: src=files/shell/zprofile dest=/home/{{dev_user}}/.zprofile owner={{dev_user}} group={{dev_user}} mode=644 force=no
     - name: copy oh-my-zsh
-      copy: src=files/shell/oh-my-zsh/ dest=/home/vagrant/.oh-my-zsh owner=vagrant group=vagrant mode=755 force=no
+      copy: src=files/shell/oh-my-zsh/ dest=/home/{{dev_user}}/.oh-my-zsh owner={{dev_user}} group={{dev_user}} mode=755 force=no
   handlers:
     - name: restart ntpd
       service: name=ntp state=restarted
