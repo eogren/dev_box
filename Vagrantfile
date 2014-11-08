@@ -41,14 +41,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   if ENV.has_key? 'DEV_SHARE'
-    config.vm.synced_folder ENV['DEV_SHARE'], "/vagrant"
+    config.vm.synced_folder ENV['DEV_SHARE'], "/vagrant", type: "nfs"
   end
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
   config.vm.provider "virtualbox" do |vb|
-    vb.customize ["modifyvm", :id, "--memory", "2048"]
+    vb.customize ["modifyvm", :id, "--memory", "4096"]
   end
  
   config.vm.provision "ansible" do |ansible|
